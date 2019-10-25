@@ -19,7 +19,6 @@ enum ValleyError {
     NoWhitePixel,
     NoBlackPixel,
     Overflow,
-    InvalidHeight,
 }
 
 impl fmt::Display for ValleyError {
@@ -31,7 +30,6 @@ impl fmt::Display for ValleyError {
                 f,
                 "image too big; integer overflow occurred while calculating distance."
             ),
-            ValleyError::InvalidHeight => write!(f, "invalid height provided"),
         }
     }
 }
@@ -44,7 +42,6 @@ impl error::Error for ValleyError {
             ValleyError::Overflow => {
                 "image too big; integer overflow occurred while calculating distance."
             }
-            ValleyError::InvalidHeight => "invalid height provided",
         }
     }
 }
