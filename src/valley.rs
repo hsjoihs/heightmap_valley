@@ -91,26 +91,17 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
     Ok((max_min_sqdist, min_sqdist_vec))
 }
 
-fn default_height_from_disttocoast(input: f64) -> f64 {
-    input
-}
-
-// expects 0 <= input <= 1 and should output between 0 and 1.
-// for instance, `(2.0 - input) * input` should result in a parabolic valley.
-fn get_color_from_min_sqdist<F>(
+fn get_color_from_min_sqdist(
     min_sqdist: Option<usize>,
-    maxmin_sqdist: usize,
-    get_height_from_disttocoast: F,
+    maxmin_sqdist: usize
 ) -> Result<rgb::RGBA8>
-where
-    F: Fn(f64) -> f64,
 {
     match min_sqdist {
         None /* white */ => Ok(rgb::RGBA::<u8> {r : 255, g : 255, b : 255, a: 255}),
         Some(sqdist) => {
-            let height255 = get_height_from_disttocoast( (sqdist as f64) / (maxmin_sqdist as f64) * 255.0) as i32;
+            let height255 = ( (sqdist as f64) / (maxmin_sqdist as f64) * 255.0) as i32;
             if height255 < 0 || height255 > 255 {
-                return Err(Box::new(ValleyError::InvalidHeight));
+                panic!("should not happen");
             }
             let res = 255 - (height255 as u8);
             Ok( rgb::RGBA::<u8>{ r : res, g: res, b: res, a: 255 })
@@ -133,9 +124,8 @@ pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str)
     // maximum distance should give #000000; pixels that are originally white must remain white
     let buffer: Result<Vec<rgb::RGBA<u8>>> = min_sqdist_vec
         .into_iter()
-        /* FIXME: make default_height_from_disttocoast customizable */
         .map(|min_sqdist| {
-            get_color_from_min_sqdist(min_sqdist, maxmin_sqdist, default_height_from_disttocoast)
+            get_color_from_min_sqdist(min_sqdist, maxmin_sqdist)
         })
         .collect();
     let buffer = buffer?;
