@@ -1,4 +1,3 @@
-
 use lab::Lab;
 
 use std::error;
@@ -90,9 +89,8 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
 
 fn get_color_from_min_sqdist(
     min_sqdist: Option<usize>,
-    maxmin_sqdist: usize
-) -> Result<rgb::RGBA8>
-{
+    maxmin_sqdist: usize,
+) -> Result<rgb::RGBA8> {
     match min_sqdist {
         None /* white */ => Ok(rgb::RGBA::<u8> {r : 255, g : 255, b : 255, a: 255}),
         Some(sqdist) => {
@@ -121,9 +119,7 @@ pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str)
     // maximum distance should give #000000; pixels that are originally white must remain white
     let buffer: Result<Vec<rgb::RGBA<u8>>> = min_sqdist_vec
         .into_iter()
-        .map(|min_sqdist| {
-            get_color_from_min_sqdist(min_sqdist, maxmin_sqdist)
-        })
+        .map(|min_sqdist| get_color_from_min_sqdist(min_sqdist, maxmin_sqdist))
         .collect();
     let buffer = buffer?;
 

@@ -56,8 +56,8 @@ mod tests {
     }
 }
 
-mod valley;
-
+pub mod valley;
+/*
 fn main() -> std::result::Result<(), Box<dyn error::Error>> {
     let matches = App::new("MyApp")
         .about("Accepts a black-and-white image file (colored images will be binarized), interprets as a height map with holes of rectangular cross-section, and converts it into triangular cross-section.")
@@ -83,4 +83,4 @@ fn main() -> std::result::Result<(), Box<dyn error::Error>> {
     let output = matches.value_of("output").unwrap();
     valley::convert(input, output)?;
     Ok(())
-}
+}*/
