@@ -23,11 +23,17 @@ mod tests {
         source.to_string_lossy().to_string()
     }
 
+     #[test]
+    fn test00() { test("00") }
+
     #[test]
     fn test01() { test("01") }
 
     #[test]
     fn test02() { test("02") }
+
+    #[test]
+    fn test03() { test("03") }
 
     fn test(id: &str) {
         convert(&get_full_path("input", id), &get_full_path("output_gen", id)).unwrap();
