@@ -14,20 +14,26 @@ mod tests {
     use std::env;
     use std::path::PathBuf;
 
-    fn fixture(fixture_filename: &str) -> String {
+    fn get_full_path(prefix: &str, id: &str) -> String {
         let root_dir = &env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
         let mut source = PathBuf::from(root_dir);
         source.push("tests/fixtures");
-        source.push(&fixture_filename);
+        let filename = format!("{}{}.png", prefix, id);
+        source.push(filename);
         source.to_string_lossy().to_string()
     }
 
     #[test]
-    fn test_successful() {
-        convert(&fixture("input01.png"), &fixture("output01_gen.png")).unwrap();
+    fn test01() { test("01") }
 
-        let image1 = lodepng::decode32_file(&fixture("output01.png")).unwrap();
-        let image2 = lodepng::decode32_file(&fixture("output01_gen.png")).unwrap();
+    #[test]
+    fn test02() { test("02") }
+
+    fn test(id: &str) {
+        convert(&get_full_path("input", id), &get_full_path("output_gen", id)).unwrap();
+        
+        let image1 = lodepng::decode32_file(&get_full_path("output",id)).unwrap();
+        let image2 = lodepng::decode32_file(&get_full_path("output_gen",id)).unwrap();
 
         assert_eq!(image1.width, image2.width);
         assert_eq!(image1.height, image2.height);
