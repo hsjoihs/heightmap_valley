@@ -1,4 +1,3 @@
-
 use lab::Lab;
 
 use std::error;
@@ -50,7 +49,15 @@ impl error::Error for ValleyError {
 fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<Option<usize>>)> {
     let mut max_min_sqdist = None;
     let mut min_sqdist_vec: Vec<Option<usize>> = vec![None; is_black_vec.len()];
+
+    use indicatif::ProgressBar;
+    use std::convert::TryInto;
+
+    let bar = ProgressBar::new(is_black_vec.len().try_into().unwrap());
     for (i, is_black) in is_black_vec.iter().enumerate() {
+        if i % 1024 == 0 {
+            bar.inc(1024);
+        }
         // for every black pixel
         if !is_black {
             continue;
@@ -84,15 +91,16 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
             max_min_sqdist = Some(minimum_sqdist)
         }
     }
+    bar.finish();
+
     let max_min_sqdist = max_min_sqdist.ok_or_else(|| Box::new(ValleyError::NoBlackPixel))?;
     Ok((max_min_sqdist, min_sqdist_vec))
 }
 
 fn get_color_from_min_sqdist(
     min_sqdist: Option<usize>,
-    maxmin_sqdist: usize
-) -> Result<rgb::RGBA8>
-{
+    maxmin_sqdist: usize,
+) -> Result<rgb::RGBA8> {
     match min_sqdist {
         None /* white */ => Ok(rgb::RGBA::<u8> {r : 255, g : 255, b : 255, a: 255}),
         Some(sqdist) => {
@@ -121,9 +129,7 @@ pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str)
     // maximum distance should give #000000; pixels that are originally white must remain white
     let buffer: Result<Vec<rgb::RGBA<u8>>> = min_sqdist_vec
         .into_iter()
-        .map(|min_sqdist| {
-            get_color_from_min_sqdist(min_sqdist, maxmin_sqdist)
-        })
+        .map(|min_sqdist| get_color_from_min_sqdist(min_sqdist, maxmin_sqdist))
         .collect();
     let buffer = buffer?;
 

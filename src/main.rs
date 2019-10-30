@@ -4,12 +4,37 @@ use clap::{App, Arg};
 
 extern crate lab;
 use std::error;
+#[macro_use]
+extern crate lazy_static;
 
 #[cfg(test)]
 mod tests {
+    // taken from https://github.com/rust-lang/rust/issues/43155
     use crate::valley::convert;
     use std::env;
     use std::path::PathBuf;
+
+    use lazy_static;
+    use std::sync::Mutex;
+
+    lazy_static! {
+        static ref TEST_MUTEX: Mutex<()> = Mutex::new(());
+    }
+
+    macro_rules! test {
+        (fn $name:ident() $body:block) => {
+            #[test]
+            fn $name() {
+                let _guard = $crate::tests::TEST_MUTEX.lock().unwrap();
+                $body
+            }
+        };
+    }
+
+    test! {  fn test00() {   test("00")  } }
+    test! {  fn test01() {   test("01")  } }
+    test! {  fn test02() {   test("02")  } }
+    test! {  fn test03() {   test("03")  } }
 
     fn get_full_path(prefix: &str, id: &str) -> String {
         let root_dir = &env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
@@ -18,26 +43,6 @@ mod tests {
         let filename = format!("{}{}.png", prefix, id);
         source.push(filename);
         source.to_string_lossy().to_string()
-    }
-
-    #[test]
-    fn test00() {
-        test("00")
-    }
-
-    #[test]
-    fn test01() {
-        test("01")
-    }
-
-    #[test]
-    fn test02() {
-        test("02")
-    }
-
-    #[test]
-    fn test03() {
-        test("03")
     }
 
     fn test(id: &str) {
