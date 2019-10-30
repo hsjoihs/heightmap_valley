@@ -71,30 +71,40 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
             }
 
             let sqdist = dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
-            if let Some(c) = minimum_sqdist {
-                if c > sqdist {
-                    minimum_sqdist = Some(sqdist);
-                }
-            } else {
-                minimum_sqdist = Some(sqdist);
-            }
+
+            minimum_sqdist = min(minimum_sqdist, sqdist);
         }
 
         let minimum_sqdist = minimum_sqdist.ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
         min_sqdist_vec[i] = Some(minimum_sqdist);
-
-        if let Some(c) = max_min_sqdist {
-            if c < minimum_sqdist {
-                max_min_sqdist = Some(minimum_sqdist)
-            }
-        } else {
-            max_min_sqdist = Some(minimum_sqdist)
-        }
+        max_min_sqdist = max(max_min_sqdist, minimum_sqdist);
     }
     bar.finish();
 
     let max_min_sqdist = max_min_sqdist.ok_or_else(|| Box::new(ValleyError::NoBlackPixel))?;
     Ok((max_min_sqdist, min_sqdist_vec))
+}
+
+fn min(op_a: Option<usize>, b: usize) -> Option<usize> {
+    if let Some(c) = op_a {
+        if c > b {
+            return Some(b);
+        }
+    } else {
+        return Some(b);
+    }
+    op_a
+}
+
+fn max(op_a: Option<usize>, b: usize) -> Option<usize> {
+    if let Some(a) = op_a {
+        if a < b {
+            return Some(b);
+        }
+    } else {
+        return Some(b);
+    }
+    op_a
 }
 
 fn get_color_from_min_sqdist(
