@@ -63,19 +63,7 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
             continue;
         }
 
-        let mut minimum_sqdist = None;
-        // find the nearest white pixel
-        for (j, is_black2) in is_black_vec.iter().enumerate() {
-            if *is_black2 {
-                continue;
-            }
-
-            let sqdist = dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
-
-            minimum_sqdist = min(minimum_sqdist, sqdist);
-        }
-
-        let minimum_sqdist = minimum_sqdist.ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
+        let minimum_sqdist = get_min_sqdist_from(i, is_black_vec, width)?.ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
         min_sqdist_vec[i] = Some(minimum_sqdist);
         max_min_sqdist = max(max_min_sqdist, minimum_sqdist);
     }
@@ -84,6 +72,22 @@ fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<
     let max_min_sqdist = max_min_sqdist.ok_or_else(|| Box::new(ValleyError::NoBlackPixel))?;
     Ok((max_min_sqdist, min_sqdist_vec))
 }
+
+fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<Option<usize>> {
+    let mut minimum_sqdist = None;
+    // find the nearest white pixel
+    for (j, is_black2) in is_black_vec.iter().enumerate() {
+        if *is_black2 {
+            continue;
+        }
+
+        let sqdist = dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
+
+        minimum_sqdist = min(minimum_sqdist, sqdist);
+    }
+    Ok(minimum_sqdist)
+}
+
 
 fn min(op_a: Option<usize>, b: usize) -> Option<usize> {
     if let Some(c) = op_a {
