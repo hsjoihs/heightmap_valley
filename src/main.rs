@@ -31,10 +31,10 @@ mod tests {
         };
     }
 
-    test! {  fn test00() {   test("00")  } }
-    test! {  fn test01() {   test("01")  } }
-    test! {  fn test02() {   test("02")  } }
-    test! {  fn test03() {   test("03")  } }
+    test! {  fn test00() {   test_with_progressbar("00")  } }
+    test! {  fn test01() {   test_with_progressbar("01")  } }
+    test! {  fn test02() {   test_with_progressbar("02")  } }
+    test! {  fn test03() {   test_with_progressbar("03")  } }
 
     fn get_full_path(prefix: &str, id: &str) -> String {
         let root_dir = &env::var("CARGO_MANIFEST_DIR").expect("$CARGO_MANIFEST_DIR");
@@ -45,10 +45,11 @@ mod tests {
         source.to_string_lossy().to_string()
     }
 
-    fn test(id: &str) {
+    fn test_with_progressbar(id: &str) {
         convert(
             &get_full_path("input", id),
             &get_full_path("output_gen", id),
+            true
         )
         .unwrap();
 
@@ -82,10 +83,17 @@ fn main() -> std::result::Result<(), Box<dyn error::Error>> {
                 .index(1)
                 .required(true),
         )
+        .arg(
+            Arg::with_name("nobar")
+                               .short("n")
+                               .long("nobar")
+                               .help("remove the progress bar"),
+        )
         .get_matches();
 
     let input = matches.value_of("input").unwrap();
     let output = matches.value_of("output").unwrap();
-    valley::convert(input, output)?;
+    let show_progress = !(matches.is_present("nobar"));
+    valley::convert(input, output, show_progress)?;
     Ok(())
 }

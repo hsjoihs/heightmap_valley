@@ -46,28 +46,47 @@ impl error::Error for ValleyError {
 }
 
 // square of distance needed from the sea of white pixels to  the most inland black pixel
-fn get_maxmin_sqdist(is_black_vec: &[bool], width: usize) -> Result<(usize, Vec<Option<usize>>)> {
+fn get_maxmin_sqdist(
+    is_black_vec: &[bool],
+    width: usize,
+    show_progress: bool,
+) -> Result<(usize, Vec<Option<usize>>)> {
     let mut max_min_sqdist = None;
     let mut min_sqdist_vec: Vec<Option<usize>> = vec![None; is_black_vec.len()];
 
     use indicatif::ProgressBar;
     use std::convert::TryInto;
 
-    let bar = ProgressBar::new(is_black_vec.len().try_into().unwrap());
-    for (i, is_black) in is_black_vec.iter().enumerate() {
-        if i % 1024 == 0 {
-            bar.inc(1024);
-        }
-        // for every black pixel
-        if !is_black {
-            continue;
-        }
+    if show_progress {
+        let bar = ProgressBar::new(is_black_vec.len().try_into().unwrap());
+        for (i, is_black) in is_black_vec.iter().enumerate() {
+            if i % 1024 == 0 {
+                bar.inc(1024);
+            }
+            // for every black pixel
+            if !is_black {
+                continue;
+            }
 
-        let minimum_sqdist = get_min_sqdist_from(i, is_black_vec, width)?.ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
-        min_sqdist_vec[i] = Some(minimum_sqdist);
-        max_min_sqdist = max(max_min_sqdist, minimum_sqdist);
+            let minimum_sqdist = get_min_sqdist_from(i, is_black_vec, width)?
+                .ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
+            min_sqdist_vec[i] = Some(minimum_sqdist);
+            max_min_sqdist = max(max_min_sqdist, minimum_sqdist);
+        }
+        bar.finish();
+    } else {
+        for (i, is_black) in is_black_vec.iter().enumerate() {
+            // for every black pixel
+            if !is_black {
+                continue;
+            }
+
+            let minimum_sqdist = get_min_sqdist_from(i, is_black_vec, width)?
+                .ok_or_else(|| Box::new(ValleyError::NoWhitePixel))?;
+            min_sqdist_vec[i] = Some(minimum_sqdist);
+            max_min_sqdist = max(max_min_sqdist, minimum_sqdist);
+        }
     }
-    bar.finish();
 
     let max_min_sqdist = max_min_sqdist.ok_or_else(|| Box::new(ValleyError::NoBlackPixel))?;
     Ok((max_min_sqdist, min_sqdist_vec))
@@ -87,7 +106,6 @@ fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<
     }
     Ok(minimum_sqdist)
 }
-
 
 fn min(op_a: Option<usize>, b: usize) -> Option<usize> {
     if let Some(c) = op_a {
@@ -128,7 +146,11 @@ fn get_color_from_min_sqdist(
     }
 }
 
-pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str) -> Result<()> {
+pub fn convert_and_export(
+    input: lodepng::Bitmap<lodepng::RGBA>,
+    filepath: &str,
+    show_progress: bool,
+) -> Result<()> {
     let width = input.width;
     let height = input.height;
     let buffer = input.buffer;
@@ -138,7 +160,7 @@ pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str)
         .map(|pixel| (Lab::from_rgb(&[pixel.r, pixel.g, pixel.b])).l < 50.0)
         .collect();
 
-    let (maxmin_sqdist, min_sqdist_vec) = get_maxmin_sqdist(&is_black_vec, width)?;
+    let (maxmin_sqdist, min_sqdist_vec) = get_maxmin_sqdist(&is_black_vec, width, show_progress)?;
 
     // maximum distance should give #000000; pixels that are originally white must remain white
     let buffer: Result<Vec<rgb::RGBA<u8>>> = min_sqdist_vec
@@ -152,8 +174,8 @@ pub fn convert_and_export(input: lodepng::Bitmap<lodepng::RGBA>, filepath: &str)
     Ok(())
 }
 
-pub fn convert(input: &str, output: &str) -> Result<()> {
+pub fn convert(input: &str, output: &str, show_progress: bool) -> Result<()> {
     let image = lodepng::decode32_file(input)?;
-    convert_and_export(image, output)?;
+    convert_and_export(image, output, show_progress)?;
     Ok(())
 }
