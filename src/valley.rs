@@ -114,18 +114,30 @@ impl Point {
     }
 
     fn new(x: usize, y: usize, width: usize, area: usize) -> Point {
-        Point{ width: width, index: y * width + x, area: area}
+        Point {
+            width: width,
+            index: y * width + x,
+            area: area,
+        }
     }
 
     fn displace(self, dx: isize, dy: isize) -> Option<Point> {
         let x = self.x() as isize + dx;
-        if x < 0 { return None;}
+        if x < 0 {
+            return None;
+        }
         let x = x as usize;
-        if x >= self.width { return None;}
+        if x >= self.width {
+            return None;
+        }
         let y = self.y() as isize + dy;
-        if y < 0 { return None; }
+        if y < 0 {
+            return None;
+        }
         let y = y as usize;
-        if y * self.width + x >= self.area { return None; }
+        if y * self.width + x >= self.area {
+            return None;
+        }
 
         Some(Point::new(x, y as usize, self.width, self.area))
     }
@@ -135,21 +147,74 @@ fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<
     let mut minimum_sqdist = None;
     // find the nearest white pixel
 
-    // first look inside a circle of radius 20
-    let radius : isize = 20;
+    for (inner_radius, radius) in &vec![(0isize, 40isize), (40isize, 80isize)] {
+    let inner_radius = *inner_radius;
+    let radius = *radius;
+
     for dx in -radius..=radius {
         let max_y = integer_sqrt((radius * radius - dx * dx) as usize) as isize;
-        for dy in -max_y..=max_y {
-            if let Some(point) = (Point {index: i, width: width, area: is_black_vec.len()}).displace(dx, dy) {
-                let j = point.index;
-                if is_black_vec[point.index] {
-                    continue;
-                }
 
-                let sqdist = dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
-                minimum_sqdist = min(minimum_sqdist, sqdist);
+        if -inner_radius <= dx && dx <= inner_radius {
+            let max_y_inner = integer_sqrt((inner_radius * inner_radius - dx * dx) as usize) as isize;
+
+            for dy in -max_y..-max_y_inner {
+                if let Some(point) = (Point {
+                    index: i,
+                    width: width,
+                    area: is_black_vec.len(),
+                })
+                .displace(dx, dy)
+                {
+                    let j = point.index;
+                    if is_black_vec[point.index] {
+                        continue;
+                    }
+
+                    let sqdist =
+                        dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
+                    minimum_sqdist = min(minimum_sqdist, sqdist);
+                }
+            }
+
+            for dy in (max_y_inner + 1)..=max_y {
+                if let Some(point) = (Point {
+                    index: i,
+                    width: width,
+                    area: is_black_vec.len(),
+                })
+                .displace(dx, dy)
+                {
+                    let j = point.index;
+                    if is_black_vec[point.index] {
+                        continue;
+                    }
+
+                    let sqdist =
+                        dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
+                    minimum_sqdist = min(minimum_sqdist, sqdist);
+                }
+            }
+        } else {
+            for dy in -max_y..=max_y {
+                if let Some(point) = (Point {
+                    index: i,
+                    width: width,
+                    area: is_black_vec.len(),
+                })
+                .displace(dx, dy)
+                {
+                    let j = point.index;
+                    if is_black_vec[point.index] {
+                        continue;
+                    }
+
+                    let sqdist =
+                        dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
+                    minimum_sqdist = min(minimum_sqdist, sqdist);
+                }
             }
         }
+    }
     }
 
     if minimum_sqdist.is_some() {
