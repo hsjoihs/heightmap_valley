@@ -49,7 +49,7 @@ mod tests {
         convert(
             &get_full_path("input", id),
             &get_full_path("output_gen", id),
-            true
+            true,
         )
         .unwrap();
 

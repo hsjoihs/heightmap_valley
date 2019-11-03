@@ -114,18 +114,30 @@ impl Point {
     }
 
     fn new(x: usize, y: usize, width: usize, area: usize) -> Point {
-        Point{ width: width, index: y * width + x, area: area}
+        Point {
+            width: width,
+            index: y * width + x,
+            area: area,
+        }
     }
 
     fn displace(self, dx: isize, dy: isize) -> Option<Point> {
         let x = self.x() as isize + dx;
-        if x < 0 { return None;}
+        if x < 0 {
+            return None;
+        }
         let x = x as usize;
-        if x >= self.width { return None;}
+        if x >= self.width {
+            return None;
+        }
         let y = self.y() as isize + dy;
-        if y < 0 { return None; }
+        if y < 0 {
+            return None;
+        }
         let y = y as usize;
-        if y * self.width + x >= self.area { return None; }
+        if y * self.width + x >= self.area {
+            return None;
+        }
 
         Some(Point::new(x, y as usize, self.width, self.area))
     }
@@ -136,11 +148,17 @@ fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<
     // find the nearest white pixel
 
     // first look inside a circle of radius 70
-    let radius : isize = 70;
+    let radius: isize = 70;
     for dx in -radius..=radius {
         let max_y = integer_sqrt((radius * radius - dx * dx) as usize) as isize;
         for dy in -max_y..=max_y {
-            if let Some(point) = (Point {index: i, width: width, area: is_black_vec.len()}).displace(dx, dy) {
+            if let Some(point) = (Point {
+                index: i,
+                width: width,
+                area: is_black_vec.len(),
+            })
+            .displace(dx, dy)
+            {
                 let j = point.index;
                 if is_black_vec[point.index] {
                     continue;
