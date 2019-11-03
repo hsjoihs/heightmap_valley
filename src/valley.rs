@@ -135,8 +135,8 @@ fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<
     let mut minimum_sqdist = None;
     // find the nearest white pixel
 
-    // first look inside a circle of radius 20
-    let radius : isize = 20;
+    // first look inside a circle of radius 70
+    let radius : isize = 70;
     for dx in -radius..=radius {
         let max_y = integer_sqrt((radius * radius - dx * dx) as usize) as isize;
         for dy in -max_y..=max_y {
