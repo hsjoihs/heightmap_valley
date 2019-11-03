@@ -92,9 +92,70 @@ fn get_maxmin_sqdist(
     Ok((max_min_sqdist, min_sqdist_vec))
 }
 
+fn integer_sqrt(x: usize) -> usize {
+    assert!(x <= 1 << 52);
+    (x as f64).sqrt() as usize
+}
+
+#[derive(Copy, Clone)]
+struct Point {
+    index: usize,
+    width: usize,
+    area: usize,
+}
+
+impl Point {
+    fn x(self) -> usize {
+        self.index % self.width
+    }
+
+    fn y(self) -> usize {
+        self.index / self.width
+    }
+
+    fn new(x: usize, y: usize, width: usize, area: usize) -> Point {
+        Point{ width: width, index: y * width + x, area: area}
+    }
+
+    fn displace(self, dx: isize, dy: isize) -> Option<Point> {
+        let x = self.x() as isize + dx;
+        if x < 0 { return None;}
+        let x = x as usize;
+        if x >= self.width { return None;}
+        let y = self.y() as isize + dy;
+        if y < 0 { return None; }
+        let y = y as usize;
+        if y * self.width + x >= self.area { return None; }
+
+        Some(Point::new(x, y as usize, self.width, self.area))
+    }
+}
+
 fn get_min_sqdist_from(i: usize, is_black_vec: &[bool], width: usize) -> Result<Option<usize>> {
     let mut minimum_sqdist = None;
     // find the nearest white pixel
+
+    // first look inside a circle of radius 20
+    let radius : isize = 20;
+    for dx in -radius..=radius {
+        let max_y = integer_sqrt((radius * radius - dx * dx) as usize) as isize;
+        for dy in -max_y..=max_y {
+            if let Some(point) = (Point {index: i, width: width, area: is_black_vec.len()}).displace(dx, dy) {
+                let j = point.index;
+                if is_black_vec[point.index] {
+                    continue;
+                }
+
+                let sqdist = dist_sq(i, j, width).ok_or_else(|| Box::new(ValleyError::Overflow))?;
+                minimum_sqdist = min(minimum_sqdist, sqdist);
+            }
+        }
+    }
+
+    if minimum_sqdist.is_some() {
+        return Ok(minimum_sqdist);
+    }
+
     for (j, is_black2) in is_black_vec.iter().enumerate() {
         if *is_black2 {
             continue;
