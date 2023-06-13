@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 lodepng = "2.5.0"
-rgb = "0.8.14"
+rgb = "0.8.27"
 lab = "0.7.2"
 conv = "0.3.3"
 clap = "2.33.0"
